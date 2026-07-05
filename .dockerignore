@@ -1,0 +1,18 @@
+# Build context ignore for the backend image (context = repo root)
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.venv/
+venv/
+backend/storage/
+frontend/
+node_modules/
+*.mp4
+*.excalidraw
+*.docx
+*.jpg
+*.png
+.git/
+.gitignore
+*.md
+!backend/requirements.txt

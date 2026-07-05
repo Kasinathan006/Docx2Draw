@@ -1,0 +1,35 @@
+# Doc2Draw backend API
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# doc2draw core dependencies
+python-docx>=0.8.11
+pypdf>=3.0.0
+
+# Background workers (optional Redis broker; falls back to in-process threads)
+celery>=5.3.0
+redis>=5.0.0
+
+# Database / models (optional; only used when DATABASE_URL is set)
+sqlmodel>=0.0.14
+sqlalchemy>=2.0.0
+
+# Auth (optional; only enforced when SUPABASE_JWT_SECRET is set)
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Supabase (optional storage + db)
+supabase>=2.0.0
+
+# Billing (optional; webhook returns 503 until configured)
+stripe>=7.0.0
+
+# Optional (video/image frame extraction)
+opencv-python>=4.8.0
+
+# Optional (LLM-powered extraction; falls back to rule-based without keys)
+# instructor>=1.0.0
+# openai>=1.0.0

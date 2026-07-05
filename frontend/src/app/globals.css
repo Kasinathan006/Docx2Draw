@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #ede9fe 0%, transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, #dbeafe 0%, transparent 55%),
+    #ffffff;
+  color: #0f172a;
+}
+
+.dark body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #2e1065 0%, transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, #1e293b 0%, transparent 55%),
+    #0b1120;
+  color: #e2e8f0;
+}
+
+/* Excalidraw fills its parent; give the wrapper a definite height. */
+.excalidraw-wrapper {
+  height: 100%;
+  width: 100%;
+}
