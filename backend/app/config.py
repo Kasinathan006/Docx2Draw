@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     free_tier_monthly_quota: int = 3
 
     # --- CORS --------------------------------------------------------------
-    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000,*"
 
     # --- Background processing --------------------------------------------
     workers: int = 2
