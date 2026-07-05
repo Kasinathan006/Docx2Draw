@@ -161,10 +161,19 @@ export default function NewProjectPage() {
             {phase === "error" && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                 <strong>Error:</strong> {error}
-                <div className="mt-1 text-xs text-red-400">
-                  Make sure the backend API is reachable at{" "}
-                  <code className="font-mono">{process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}</code>
-                  {" "}— check your <code className="font-mono">NEXT_PUBLIC_API_URL</code> env variable if deployed.
+                <div className="mt-2 text-xs text-red-400 space-y-1">
+                  <p>The API request failed. Possible causes:</p>
+                  <ul className="list-disc ml-4 space-y-0.5">
+                    <li>Backend (Render) may be sleeping — wait 30 s and retry</li>
+                    <li>
+                      Set <code className="font-mono">NEXT_PUBLIC_API_URL</code> in
+                      Vercel → Settings → Environment Variables → your Render URL
+                    </li>
+                    <li>
+                      Set <code className="font-mono">BACKEND_URL</code> in Vercel
+                      (same value, used during SSR rewrites)
+                    </li>
+                  </ul>
                 </div>
               </div>
             )}

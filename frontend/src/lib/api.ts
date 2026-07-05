@@ -1,10 +1,24 @@
 import axios from "axios";
 
-export const API_BASE = (
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.NEXT_PUBLIC_API_BASE ||
-  "http://localhost:8000"
-).replace(/\/$/, "");
+/**
+ * API_BASE strategy:
+ * - In browser (client-side): use "" (empty = relative URLs like /api/v1/...)
+ *   These go through Next.js rewrites → backend. No CORS ever.
+ * - In server-side rendering (SSR): use the full backend URL so Next.js
+ *   can proxy the request during rewrite resolution.
+ *
+ * Set NEXT_PUBLIC_API_URL in Vercel → Project Settings → Environment Variables
+ * to your Render backend URL: https://your-service.onrender.com
+ */
+const isServer = typeof window === "undefined";
+
+export const API_BASE = isServer
+  ? (
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.BACKEND_URL ||
+      "http://localhost:8000"
+    ).replace(/\/$/, "")
+  : ""; // Client-side: always relative (proxied by Next.js rewrites)
 
 export const apiClient = axios.create({ baseURL: API_BASE });
 

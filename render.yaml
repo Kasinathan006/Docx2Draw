@@ -5,7 +5,8 @@ services:
     dockerContext: .
     dockerfilePath: backend/Dockerfile
     plan: free
-    healthCheckPath: /api/v1/projects
+    # /health is a real GET endpoint defined in main.py
+    healthCheckPath: /health
     envVars:
       - key: GEMINI_API_KEY
         sync: false
@@ -15,5 +16,7 @@ services:
         sync: false
       - key: SUPABASE_KEY
         sync: false
-      - key: BACKEND_CORS_ORIGINS
-        value: "https://doc2draw-platform.vercel.app,http://localhost:3000"
+      # CORS_ORIGINS is the correct key that config.py reads via pydantic-settings
+      # "*" lets any Vercel preview URL through (security.py handles this safely)
+      - key: CORS_ORIGINS
+        value: "*"
