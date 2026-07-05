@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: doc2draw-backend
+    env: docker
+    dockerContext: .
+    dockerfilePath: backend/Dockerfile
+    plan: free
+    healthCheckPath: /api/v1/projects
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: BACKEND_CORS_ORIGINS
+        value: "https://doc2draw-platform.vercel.app,http://localhost:3000"
