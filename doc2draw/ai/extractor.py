@@ -44,54 +44,69 @@ def rule_based_extract(text: str, title: str = "Document Overview") -> DiagramSt
     """
     Intelligent rule-based fallback extractor that parses markdown headings,
     paragraphs, and bullet points into a clean DiagramStructure without API calls.
+    Handles long text documents by chunking into sequential cards.
     """
-    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    # Split text into paragraphs
+    paragraphs = [p.strip() for p in re.split(r'\n\s*\n', text) if p.strip()]
+    if not paragraphs:
+        paragraphs = [p.strip() for p in text.split('\n') if p.strip()]
+        
     items = []
-    
     current_title = ""
     current_bullets = []
     current_idx = 1
     
     colors = ["purple", "blue", "green", "orange", "yellow", "cyan", "pink"]
     
-    for line in lines:
-        if _is_heading(line):
-            # Save previous item if exists
-            if current_title or current_bullets:
-                item_id = f"item_{current_idx}"
-                items.append(DiagramItem(
-                    id=item_id,
-                    title=current_title or f"Section {current_idx}",
-                    bullet_points=current_bullets[:5] if current_bullets else ["Key concepts discussed in this section."],
-                    category_color=colors[(current_idx - 1) % len(colors)],
-                    connected_to=[f"item_{current_idx+1}"]
-                ))
-                current_idx += 1
-                current_bullets = []
+    def save_item():
+        nonlocal current_title, current_bullets, current_idx
+        if current_title or current_bullets:
+            items.append(DiagramItem(
+                id=f"item_{current_idx}",
+                title=current_title or f"Section {current_idx}",
+                bullet_points=current_bullets[:5] if current_bullets else ["Key concepts discussed in this section."],
+                category_color=colors[(current_idx - 1) % len(colors)],
+                connected_to=[]
+            ))
+            current_idx += 1
+            current_title = ""
+            current_bullets = []
 
-            current_title = _heading_title(line)
-        elif line.startswith(("-", "*", "•", "1.", "2.", "3.", "4.", "5.")):
-            clean_pt = re.sub(r"^([-*•]|\d+\.)\s*", "", line).strip()
-            if len(clean_pt) > 5:
-                current_bullets.append(clean_pt)
+    for para in paragraphs:
+        lines = [line.strip() for line in para.split('\n') if line.strip()]
+        if not lines:
+            continue
+            
+        first_line = lines[0]
+        if _is_heading(first_line):
+            save_item()
+            current_title = _heading_title(first_line)
+            process_lines = lines[1:]
         else:
-            # Regular sentence, treat as bullet if short enough
-            if len(line) > 15 and len(line) < 120 and len(current_bullets) < 4:
-                current_bullets.append(line)
+            process_lines = lines
+            
+        for line in process_lines:
+            if line.startswith(("-", "*", "•", "1.", "2.", "3.", "4.", "5.")):
+                clean_pt = re.sub(r"^([-*•]|\d+\.)\s*", "", line).strip()
+                if len(clean_pt) > 5:
+                    current_bullets.append(clean_pt[:150])
+            else:
+                # Regular sentence, break long lines into sentences
+                sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', line) if s.strip()]
+                for s in sentences:
+                    if len(s) > 10:
+                        current_bullets.append(s[:150])
+                        
+            # If item gets too large, start a new one
+            if len(current_bullets) >= 5:
+                save_item()
                 
-    # Save last item
-    if current_title or current_bullets:
-        items.append(DiagramItem(
-            id=f"item_{current_idx}",
-            title=current_title or f"Section {current_idx}",
-            bullet_points=current_bullets[:5] if current_bullets else ["Summary and closing remarks."],
-            category_color=colors[(current_idx - 1) % len(colors)],
-            connected_to=[]
-        ))
-        
-    # Remove dangling connection on the very last item
-    if items and items[-1].connected_to:
-        items[-1].connected_to = []
+    # Save any remaining data
+    save_item()
+    
+    # Post-process to limit total items and connect them sequentially
+    if len(items) > 12:
+        items = items[:12]
         
     if not items:
         items = [
@@ -103,6 +118,10 @@ def rule_based_extract(text: str, title: str = "Document Overview") -> DiagramSt
                 connected_to=[]
             )
         ]
+        
+    # Connect sequential items
+    for i in range(len(items) - 1):
+        items[i].connected_to = [items[i+1].id]
         
     return DiagramStructure(
         title=title,
