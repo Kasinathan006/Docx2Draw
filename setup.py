@@ -13,7 +13,7 @@ setup(
     ],
     extras_require={
         "ai": ["instructor>=1.0.0", "openai>=1.0.0"],
-        "media": ["opencv-python>=4.8.0"],
+        "media": ["opencv-python-headless>=4.8.0"],
         "dev": ["pytest>=7.0.0"],
     },
     entry_points={
