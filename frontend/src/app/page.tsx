@@ -29,11 +29,7 @@ const FEATURES = [
   },
 ];
 
-const PRICING = [
-  { name: "Starter", price: "$0", period: "/mo", perks: ["3 diagrams / month", "Word & text upload", "Standard grid layout"], cta: "Start free", highlight: false },
-  { name: "Creator Pro", price: "$19", period: "/mo", perks: ["Unlimited diagrams", "Video & screenshots (500MB)", "All layout styles", "PNG & SVG export"], cta: "Go Pro", highlight: true },
-  { name: "Team & Agency", price: "$49", period: "/mo", perks: ["Everything in Pro", "5 team seats", "Shared template library", "API access"], cta: "Contact us", highlight: false },
-];
+
 
 export default function Landing() {
   return (
@@ -87,45 +83,7 @@ export default function Landing() {
         ))}
       </section>
 
-      {/* Pricing */}
-      <section className="mt-24">
-        <h2 className="text-center text-3xl font-bold text-slate-800 dark:text-slate-100">Simple pricing</h2>
-        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {PRICING.map((tier) => (
-            <Card
-              key={tier.name}
-              className={
-                tier.highlight
-                  ? "relative border-brand-400 p-7 ring-2 ring-brand-400"
-                  : "p-7"
-              }
-            >
-              {tier.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
-                  Most Popular
-                </span>
-              )}
-              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{tier.name}</h3>
-              <p className="mt-3">
-                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">{tier.price}</span>
-                <span className="text-slate-400">{tier.period}</span>
-              </p>
-              <ul className="mt-5 space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                {tier.perks.map((p) => (
-                  <li key={p} className="flex items-center gap-2">
-                    <span className="text-brand-500">✓</span> {p}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/dashboard/new" className="mt-6 block">
-                <Button className="w-full" variant={tier.highlight ? "default" : "outline"}>
-                  {tier.cta}
-                </Button>
-              </Link>
-            </Card>
-          ))}
-        </div>
-      </section>
+
 
       <footer className="mt-24 text-center text-xs text-slate-400">
         Doc2Draw AI · Documents → Excalidraw · Built for scale &amp; aesthetic excellence
