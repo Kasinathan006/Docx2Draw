@@ -8,7 +8,7 @@ import FileDropzone from "@/components/upload/FileDropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { generateDiagram, uploadFile } from "@/lib/api";
+import { generateDiagram, uploadFile, verifyApiKey } from "@/lib/api";
 import { useProjectStatus } from "@/hooks/useProjectStatus";
 import { saveProject } from "@/lib/projects";
 
@@ -36,6 +36,9 @@ export default function NewProjectPage() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [keyStatus, setKeyStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
+  const [keyError, setKeyError] = useState("");
 
   const { stage, progress, message, isDone, isError, errorMessage, chapters } =
     useProjectStatus(jobId);
@@ -69,6 +72,20 @@ export default function NewProjectPage() {
     }
   };
 
+  const handleVerifyKey = async () => {
+    if (!apiKey.trim()) return;
+    setKeyStatus("checking");
+    setKeyError("");
+    try {
+      const res = await verifyApiKey(apiKey.trim());
+      setKeyStatus(res.valid ? "valid" : "invalid");
+      if (!res.valid) setKeyError(res.error || "Invalid key");
+    } catch (e) {
+      setKeyStatus("invalid");
+      setKeyError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
   const start = async () => {
     if (!file) return;
     setPhase("working");
@@ -80,6 +97,7 @@ export default function NewProjectPage() {
         title: title || "Visual Map",
         columns,
         extract_screenshots: extractScreenshots,
+        api_key: keyStatus === "valid" ? apiKey.trim() : undefined,
       });
       setJobId(job.job_id);
     } catch (e) {
@@ -177,6 +195,39 @@ export default function NewProjectPage() {
                 </div>
               </div>
             )}
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+                OpenAI API Key
+                <span className="ml-1 text-xs font-normal text-slate-400">(optional — uses AI structuring)</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => { setApiKey(e.target.value); setKeyStatus("idle"); setKeyError(""); }}
+                  placeholder="sk-..."
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-mono outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900"
+                />
+                <button
+                  type="button"
+                  onClick={handleVerifyKey}
+                  disabled={!apiKey.trim() || keyStatus === "checking"}
+                  className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  {keyStatus === "checking" ? "Checking…" : "Verify"}
+                </button>
+              </div>
+              {keyStatus === "valid" && (
+                <p className="mt-1 text-xs font-medium text-emerald-600">✓ Key verified — AI extraction enabled</p>
+              )}
+              {keyStatus === "invalid" && (
+                <p className="mt-1 text-xs text-red-500">✗ {keyError || "Invalid key"}</p>
+              )}
+              {keyStatus === "idle" && !apiKey && (
+                <p className="mt-1 text-xs text-slate-400">Leave blank to use fast rule-based extraction (no API key needed)</p>
+              )}
+            </div>
 
             <Button className="w-full" disabled={!file} onClick={start}>
               Generate Visual Map <Sparkles className="h-4 w-4" />

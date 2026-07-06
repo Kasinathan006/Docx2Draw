@@ -69,6 +69,12 @@ export interface GenerateOptions {
   columns?: number;
   layout_style?: string;
   extract_screenshots?: boolean;
+  api_key?: string;
+}
+
+export interface VerifyKeyResponse {
+  valid: boolean;
+  error?: string;
 }
 
 // ---- Calls ----------------------------------------------------------------
@@ -97,4 +103,11 @@ export async function getExcalidraw(projectId: string): Promise<Record<string, u
 
 export function downloadUrl(projectId: string): string {
   return `${API_BASE}/api/v1/projects/${projectId}/download`;
+}
+
+export async function verifyApiKey(apiKey: string): Promise<VerifyKeyResponse> {
+  const { data } = await apiClient.post<VerifyKeyResponse>("/api/v1/projects/verify-key", {
+    api_key: apiKey,
+  });
+  return data;
 }

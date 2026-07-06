@@ -16,6 +16,8 @@ from ....models.schemas import (
     JobStatusEnum,
     JobStatusResponse,
     ProjectUploadResponse,
+    VerifyKeyRequest,
+    VerifyKeyResponse,
 )
 from ....services import storage_service
 from ....util import new_id
@@ -23,6 +25,17 @@ from ....workers.store import job_store
 from ....workers.tasks import dispatch
 
 router = APIRouter(prefix="/projects", tags=["projects"])
+
+@router.post("/verify-key", response_model=VerifyKeyResponse)
+def verify_key(req: VerifyKeyRequest):
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=req.api_key)
+        client.models.list()
+        return VerifyKeyResponse(valid=True)
+    except Exception as e:
+        return VerifyKeyResponse(valid=False, error=str(e))
+
 
 
 @router.post("/upload", response_model=ProjectUploadResponse)
@@ -81,6 +94,7 @@ def generate_project(
             "columns": req.columns,
             "layout_style": req.layout_style,
             "extract_screenshots": req.extract_screenshots,
+            "api_key": req.api_key,
         },
     )
     return GenerateResponse(

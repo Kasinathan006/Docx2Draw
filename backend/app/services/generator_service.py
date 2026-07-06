@@ -34,12 +34,16 @@ def run_generation(
     extract_screenshots: bool = True,
     project_id: Optional[str] = None,
     progress_cb: ProgressCb = None,
+    api_key: Optional[str] = None,
 ) -> Tuple[Dict, int]:
     """
     Execute the end-to-end generation pipeline.
 
     Returns ``(excalidraw_dict, chapters_extracted)``. Raises on any failure so
     the caller can mark the job as errored.
+
+    ``api_key`` is forwarded to :func:`extract_diagram_structure` so a
+    user-supplied OpenAI key is used instead of the server environment key.
     """
     cb = progress_cb or _noop
     ext = Path(input_path).suffix.lower()
@@ -68,7 +72,7 @@ def run_generation(
 
     # --- Stage 2: semantic structuring -------------------------------------
     cb("ai_structuring", 60, "Structuring semantic diagram tree")
-    structure = extract_diagram_structure(text_content, title=title)
+    structure = extract_diagram_structure(text_content, title=title, api_key=api_key)
 
     if screenshots:
         for idx, item in enumerate(structure.items):

@@ -53,6 +53,7 @@ def _run_generation(job_id: str, project_id: str, config: Dict) -> None:
             extract_screenshots=bool(config.get("extract_screenshots", True)),
             project_id=project_id,
             progress_cb=_progress(job_id),
+            api_key=config.get("api_key") or None,
         )
 
         storage_service.save_output(project_id, excalidraw)

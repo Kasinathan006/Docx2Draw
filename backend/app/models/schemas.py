@@ -37,6 +37,13 @@ class ProjectUploadResponse(BaseModel):
     uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
+class VerifyKeyRequest(BaseModel):
+    api_key: str
+
+class VerifyKeyResponse(BaseModel):
+    valid: bool
+    error: Optional[str] = None
+
 class GenerateRequest(BaseModel):
     project_id: str
     title: Optional[str] = None
@@ -44,6 +51,7 @@ class GenerateRequest(BaseModel):
     layout_style: str = Field(default="multi_column_grid")
     extract_screenshots: bool = True
     ai_model_provider: str = Field(default="rule_based")
+    api_key: Optional[str] = None
 
 
 class GenerateResponse(BaseModel):
