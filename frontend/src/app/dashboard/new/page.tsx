@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Key, ChevronDown } from "lucide-react";
 import FileDropzone from "@/components/upload/FileDropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,50 @@ const STAGE_LABEL: Record<string, string> = {
   error: "Error",
 };
 
+type Provider = "openai" | "gemini" | "anthropic" | "groq";
+
+const PROVIDERS: {
+  value: Provider;
+  label: string;
+  logo: string;
+  placeholder: string;
+  hint: string;
+  color: string;
+}[] = [
+  {
+    value: "openai",
+    label: "OpenAI",
+    logo: "🟢",
+    placeholder: "sk-...",
+    hint: "Get from platform.openai.com/api-keys",
+    color: "text-emerald-600",
+  },
+  {
+    value: "gemini",
+    label: "Google Gemini",
+    logo: "🔵",
+    placeholder: "AIza...",
+    hint: "Get from aistudio.google.com/app/apikey",
+    color: "text-blue-600",
+  },
+  {
+    value: "anthropic",
+    label: "Anthropic (Claude)",
+    logo: "🟠",
+    placeholder: "sk-ant-...",
+    hint: "Get from console.anthropic.com/settings/keys",
+    color: "text-orange-600",
+  },
+  {
+    value: "groq",
+    label: "Groq",
+    logo: "🟣",
+    placeholder: "gsk_...",
+    hint: "Get from console.groq.com/keys",
+    color: "text-purple-600",
+  },
+];
+
 export default function NewProjectPage() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -36,14 +80,17 @@ export default function NewProjectPage() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [provider, setProvider] = useState<Provider>("openai");
   const [apiKey, setApiKey] = useState("");
   const [keyStatus, setKeyStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const [keyError, setKeyError] = useState("");
+  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
 
   const { stage, progress, message, isDone, isError, errorMessage, chapters } =
     useProjectStatus(jobId);
 
-  // Navigate to the editor once generation completes.
+  const currentProvider = PROVIDERS.find((p) => p.value === provider)!;
+
   useEffect(() => {
     if (isDone && projectId) {
       saveProject({
@@ -72,12 +119,20 @@ export default function NewProjectPage() {
     }
   };
 
+  const handleProviderChange = (p: Provider) => {
+    setProvider(p);
+    setApiKey("");
+    setKeyStatus("idle");
+    setKeyError("");
+    setShowProviderDropdown(false);
+  };
+
   const handleVerifyKey = async () => {
     if (!apiKey.trim()) return;
     setKeyStatus("checking");
     setKeyError("");
     try {
-      const res = await verifyApiKey(apiKey.trim());
+      const res = await verifyApiKey(apiKey.trim(), provider);
       setKeyStatus(res.valid ? "valid" : "invalid");
       if (!res.valid) setKeyError(res.error || "Invalid key");
     } catch (e) {
@@ -98,6 +153,7 @@ export default function NewProjectPage() {
         columns,
         extract_screenshots: extractScreenshots,
         api_key: keyStatus === "valid" ? apiKey.trim() : undefined,
+        ai_provider: keyStatus === "valid" ? provider : undefined,
       });
       setJobId(job.job_id);
     } catch (e) {
@@ -176,6 +232,98 @@ export default function NewProjectPage() {
               </div>
             </div>
 
+            {/* ─── AI Provider + API Key Section ─────────────────────────── */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-700 dark:bg-slate-800/50">
+              <div className="flex items-center gap-2 mb-1">
+                <Key className="h-4 w-4 text-slate-500" />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  AI Provider &amp; API Key
+                </span>
+                <span className="text-xs text-slate-400 font-normal">(optional — enables smarter diagrams)</span>
+              </div>
+
+              {/* Provider Selector */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowProviderDropdown((v) => !v)}
+                  className="w-full flex items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <span>{currentProvider.logo}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200">{currentProvider.label}</span>
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${showProviderDropdown ? "rotate-180" : ""}`} />
+                </button>
+
+                {showProviderDropdown && (
+                  <div className="absolute z-20 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900 overflow-hidden">
+                    {PROVIDERS.map((p) => (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => handleProviderChange(p.value)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
+                          provider === p.value ? "bg-slate-100 dark:bg-slate-800" : ""
+                        }`}
+                      >
+                        <span className="text-base">{p.logo}</span>
+                        <div>
+                          <div className="font-medium text-slate-800 dark:text-slate-100">{p.label}</div>
+                          <div className="text-xs text-slate-400">{p.hint}</div>
+                        </div>
+                        {provider === p.value && (
+                          <span className="ml-auto text-xs text-brand-600 font-medium">✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Key Input + Verify */}
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => {
+                    setApiKey(e.target.value);
+                    setKeyStatus("idle");
+                    setKeyError("");
+                  }}
+                  placeholder={currentProvider.placeholder}
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-mono outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900"
+                />
+                <button
+                  type="button"
+                  onClick={handleVerifyKey}
+                  disabled={!apiKey.trim() || keyStatus === "checking"}
+                  className="shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 transition-colors"
+                >
+                  {keyStatus === "checking" ? "Checking…" : "Verify"}
+                </button>
+              </div>
+
+              {/* Status feedback */}
+              {keyStatus === "valid" && (
+                <p className="text-xs font-medium text-emerald-600">
+                  ✓ {currentProvider.label} key verified — AI extraction enabled
+                </p>
+              )}
+              {keyStatus === "invalid" && (
+                <p className="text-xs text-red-500">✗ {keyError || "Invalid key — check and try again"}</p>
+              )}
+              {keyStatus === "idle" && !apiKey && (
+                <p className="text-xs text-slate-400">
+                  Leave blank to use fast rule-based extraction (no API key needed)
+                </p>
+              )}
+              {keyStatus === "idle" && apiKey && (
+                <p className="text-xs text-amber-500">Click Verify to validate your key before generating</p>
+              )}
+            </div>
+            {/* ─────────────────────────────────────────────────────────────── */}
+
             {phase === "error" && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                 <strong>Error:</strong> {error}
@@ -187,47 +335,10 @@ export default function NewProjectPage() {
                       Set <code className="font-mono">NEXT_PUBLIC_API_URL</code> in
                       Vercel → Settings → Environment Variables → your Render URL
                     </li>
-                    <li>
-                      Set <code className="font-mono">BACKEND_URL</code> in Vercel
-                      (same value, used during SSR rewrites)
-                    </li>
                   </ul>
                 </div>
               </div>
             )}
-
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-              <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-                OpenAI API Key
-                <span className="ml-1 text-xs font-normal text-slate-400">(optional — uses AI structuring)</span>
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => { setApiKey(e.target.value); setKeyStatus("idle"); setKeyError(""); }}
-                  placeholder="sk-..."
-                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-mono outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900"
-                />
-                <button
-                  type="button"
-                  onClick={handleVerifyKey}
-                  disabled={!apiKey.trim() || keyStatus === "checking"}
-                  className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-                >
-                  {keyStatus === "checking" ? "Checking…" : "Verify"}
-                </button>
-              </div>
-              {keyStatus === "valid" && (
-                <p className="mt-1 text-xs font-medium text-emerald-600">✓ Key verified — AI extraction enabled</p>
-              )}
-              {keyStatus === "invalid" && (
-                <p className="mt-1 text-xs text-red-500">✗ {keyError || "Invalid key"}</p>
-              )}
-              {keyStatus === "idle" && !apiKey && (
-                <p className="mt-1 text-xs text-slate-400">Leave blank to use fast rule-based extraction (no API key needed)</p>
-              )}
-            </div>
 
             <Button className="w-full" disabled={!file} onClick={start}>
               Generate Visual Map <Sparkles className="h-4 w-4" />

@@ -39,6 +39,7 @@ class ProjectUploadResponse(BaseModel):
 
 class VerifyKeyRequest(BaseModel):
     api_key: str
+    provider: str = "openai"  # openai | gemini | anthropic | groq
 
 class VerifyKeyResponse(BaseModel):
     valid: bool
@@ -52,6 +53,7 @@ class GenerateRequest(BaseModel):
     extract_screenshots: bool = True
     ai_model_provider: str = Field(default="rule_based")
     api_key: Optional[str] = None
+    ai_provider: Optional[str] = None  # openai | gemini | anthropic | groq
 
 
 class GenerateResponse(BaseModel):

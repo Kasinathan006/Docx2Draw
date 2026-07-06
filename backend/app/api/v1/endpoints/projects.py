@@ -28,13 +28,49 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 @router.post("/verify-key", response_model=VerifyKeyResponse)
 def verify_key(req: VerifyKeyRequest):
+    provider = (req.provider or "openai").lower()
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=req.api_key)
-        client.models.list()
+        if provider == "openai":
+            from openai import OpenAI
+            client = OpenAI(api_key=req.api_key)
+            client.models.list()
+
+        elif provider == "gemini":
+            import google.generativeai as genai
+            genai.configure(api_key=req.api_key)
+            models = [m for m in genai.list_models()]
+            if not models:
+                raise ValueError("No models returned — key may be invalid")
+
+        elif provider == "anthropic":
+            import anthropic
+            client = anthropic.Anthropic(api_key=req.api_key)
+            # Minimal API call — list models (or use a tiny message)
+            client.models.list()
+
+        elif provider == "groq":
+            from openai import OpenAI
+            client = OpenAI(
+                api_key=req.api_key,
+                base_url="https://api.groq.com/openai/v1"
+            )
+            client.models.list()
+
+        else:
+            return VerifyKeyResponse(valid=False, error=f"Unknown provider: {provider}")
+
         return VerifyKeyResponse(valid=True)
     except Exception as e:
-        return VerifyKeyResponse(valid=False, error=str(e))
+        err = str(e)
+        # Friendly error messages
+        if "401" in err or "invalid_api_key" in err.lower() or "authentication" in err.lower():
+            err = "Invalid API key — check the key and try again"
+        elif "403" in err:
+            err = "Access denied — your key may not have permission"
+        elif "429" in err:
+            err = "Rate limit hit — but your key is valid!"
+        return VerifyKeyResponse(valid=False, error=err)
+
 
 
 
@@ -95,6 +131,7 @@ def generate_project(
             "layout_style": req.layout_style,
             "extract_screenshots": req.extract_screenshots,
             "api_key": req.api_key,
+            "ai_provider": req.ai_provider,
         },
     )
     return GenerateResponse(

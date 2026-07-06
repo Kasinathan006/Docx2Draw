@@ -70,6 +70,7 @@ export interface GenerateOptions {
   layout_style?: string;
   extract_screenshots?: boolean;
   api_key?: string;
+  ai_provider?: string;
 }
 
 export interface VerifyKeyResponse {
@@ -105,9 +106,10 @@ export function downloadUrl(projectId: string): string {
   return `${API_BASE}/api/v1/projects/${projectId}/download`;
 }
 
-export async function verifyApiKey(apiKey: string): Promise<VerifyKeyResponse> {
+export async function verifyApiKey(apiKey: string, provider: string = "openai"): Promise<VerifyKeyResponse> {
   const { data } = await apiClient.post<VerifyKeyResponse>("/api/v1/projects/verify-key", {
     api_key: apiKey,
+    provider,
   });
   return data;
 }
